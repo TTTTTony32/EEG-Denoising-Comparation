@@ -16,12 +16,13 @@ test_num = 400  # how many trails for test
 combin_num = 10  # combin EEG and noise x times
 
 
-EEG_all = np.load('EEGIFNet/EEGDenoiseNet/EEG_all_epochs.npy')
-EMG_all = np.load('EEGIFNet/EEGDenoiseNet/EMG_all_epochs.npy')
+EEG_all = np.load('datasets/EEG_all_epochs.npy')
+EMG_all = np.load('datasets/EMG_all_epochs.npy')
+EOG_all = np.load('datasets/EOG_all_epochs.npy')
 # EEG_all = np.load('/data/ch/EEGdenoise/data/dataset/EEG_all_epochs_512hz.npy')
 # EMG_all = np.load('/data/ch/EEGdenoise/data/dataset/EMG_all_epochs_512hz.npy')
 
-EMGEEG_train_input, EMGEEG_train_output, EMGEEG_val_input, EMGEEG_val_output, EMGEEG_test_input, EMGEEG_test_output, test_std_VALUE, SNR_train = prepare_data(EEG_all, EMG_all, combin_num,
+EMGEEG_train_input, EMGEEG_train_output, EMGEEG_val_input, EMGEEG_val_output, EMGEEG_test_input, EMGEEG_test_output, test_std_VALUE, SNR_train = prepare_data(EEG_all, EMG_all, EOG_all, combin_num,
                                                                                   0.8, 'EOG')
 
 train_input = EMGEEG_train_input
@@ -40,9 +41,9 @@ test_output = EMGEEG_test_output
 #np.save('/data/ch/EEGdenoise/data/MA_SNR_train', SNR_train)
 
 
-np.save('EEGIFNet/dataset/EMG_train_input.npy', train_input)
-np.save('EEGIFNet/dataset/EMG_train_output.npy', train_output)
-np.save('EEGIFNet/dataset/EMG_val_input.npy', val_input)
-np.save('EEGIFNet/dataset/EMG_val_output.npy', val_output)
-np.save('EEGIFNet/dataset/EMG_test_input.npy', test_input)
-np.save('EEGIFNet/dataset/EMG_test_output.npy', test_output)
+np.save('prepared_data/train_input.npy', train_input)
+np.save('prepared_data/train_output.npy', train_output)
+np.save('prepared_data/val_input.npy', val_input)
+np.save('prepared_data/val_output.npy', val_output)
+np.save('prepared_data/test_input.npy', test_input)
+np.save('prepared_data/test_output.npy', test_output)

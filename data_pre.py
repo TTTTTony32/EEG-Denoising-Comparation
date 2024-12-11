@@ -25,28 +25,34 @@ def random_signal(signal,combin_num):
 
 
 
-def prepare_data(EEG_all, noise_all, combin_num, train_per, noise_type):
+def prepare_data(EEG_all, noise1_all, noise2_all, combin_num, train_per, noise_type):
     # Here we use eeg and noise signal to generate scale transed training, validation, test signal
     EEG_all_random = np.squeeze(random_signal(signal = EEG_all, combin_num = 1))
-    noise_all_random = np.squeeze(random_signal(signal = noise_all, combin_num = 1))
+    noise1_all_random = np.squeeze(random_signal(signal = noise1_all, combin_num = 1))
+    noise2_all_random = np.squeeze(random_signal(signal = noise2_all, combin_num = 1))
     print('EEG segments: ', EEG_all_random.shape)
-    print('noise segments: ', noise_all_random.shape)
+    print('noise1 segments: ', noise1_all_random.shape)
+    print('noise2 segments: ', noise2_all_random.shape)
 
-    if noise_type == 'EMG':  # Training set will Reuse some of the EEG signal to much the number of EMG
-        reuse_num = noise_all_random.shape[0] - EEG_all_random.shape[0]
+    if noise_type == 'EMG':  # Training set will Reuse some of the EEG signal to match the number of noise signals
+        max_noise_num = max(noise1_all_random.shape[0], noise2_all_random.shape[0])
+        reuse_num = max_noise_num - EEG_all_random.shape[0]
         EEG_reuse = EEG_all_random[0 : reuse_num, :]
         EEG_all_random = np.vstack([EEG_reuse, EEG_all_random])
-        print('EEG segments after reuse: ',EEG_all_random.shape[0])
+        print('EEG segments after reuse: ', EEG_all_random.shape[0])
 
-    elif noise_type == 'EOG':  # We will drop some of the EEG signal to much the number of EMG
-        EEG_all_random = EEG_all_random[0:noise_all_random.shape[0]]
-        print('EEG segments after drop: ',EEG_all_random.shape[0])
+    elif noise_type == 'EOG':  # We will drop some of the EEG signal to match the number of noise signals
+        min_noise_num = min(noise1_all_random.shape[0], noise2_all_random.shape[0])
+        EEG_all_random = EEG_all_random[0 : min_noise_num]
+        print('EEG segments after drop: ', EEG_all_random.shape[0])
 
+    # Ensure noise1 and noise2 have the same number of segments as EEG
+    noise1_all_random = noise1_all_random[0 : EEG_all_random.shape[0]]
+    noise2_all_random = noise2_all_random[0 : EEG_all_random.shape[0]]
 
     # get the 
-    timepoint = noise_all_random.shape[1]
+    timepoint = noise1_all_random.shape[1]
     train_num = round(train_per * EEG_all_random.shape[0]) # the number of segmentations used in training process
-    #validation_num = EEG_all_random.shape[0] - train_num
     validation_num = round((EEG_all_random.shape[0] - train_num) / 2) # the number of segmentations used in validation process
     test_num = EEG_all_random.shape[0] - train_num - validation_num  # Rest are the number of segmentations used in test process
 
@@ -55,13 +61,18 @@ def prepare_data(EEG_all, noise_all, combin_num, train_per, noise_type):
     validation_eeg = EEG_all_random[train_num : train_num + validation_num, :]
     test_eeg = EEG_all_random[train_num + validation_num : EEG_all_random.shape[0], :]
 
-    train_noise = noise_all_random[0 : train_num, :]
+    train_noise1 = noise1_all_random[0 : train_num, :]
     #test_noise = noise_all_random[train_num: noise_all_random.shape[0], :]
-    validation_noise = noise_all_random[train_num : train_num + validation_num,:]
-    test_noise = noise_all_random[train_num + validation_num : noise_all_random.shape[0], :]
+    validation_noise1 = noise1_all_random[train_num : train_num + validation_num,:]
+    test_noise1 = noise1_all_random[train_num + validation_num : noise1_all_random.shape[0], :]
+
+    train_noise2 = noise2_all_random[0 : train_num, :]
+    validation_noise2 = noise2_all_random[train_num : train_num + validation_num,:]
+    test_noise2 = noise2_all_random[train_num + validation_num : noise2_all_random.shape[0], :]
 
     EEG_train = random_signal(signal = train_eeg, combin_num = combin_num).reshape(combin_num * train_eeg.shape[0], timepoint)
-    NOISE_train = random_signal(signal = train_noise, combin_num = combin_num).reshape(combin_num * train_noise.shape[0], timepoint)
+    NOISE1_train = random_signal(signal = train_noise1, combin_num = combin_num).reshape(combin_num * train_noise1.shape[0], timepoint)
+    NOISE2_train = random_signal(signal = train_noise2, combin_num = combin_num).reshape(combin_num * train_noise2.shape[0], timepoint)
 
     #print(EEG_train.shape)
     #print(NOISE_train.shape)
@@ -78,11 +89,12 @@ def prepare_data(EEG_all, noise_all, combin_num, train_per, noise_type):
     NOISE_train_adjust=[]
     for i in range (EEG_train.shape[0]):
         eeg=EEG_train[i].reshape(EEG_train.shape[1])
-        noise=NOISE_train[i].reshape(NOISE_train.shape[1])
+        noise1=NOISE1_train[i].reshape(NOISE1_train.shape[1])
+        noise2=NOISE2_train[i].reshape(NOISE2_train.shape[1])
 
-        coe=get_rms(eeg)/(get_rms(noise)*SNR_train[i])
-        noise = noise*coe
-        neeg = noise+eeg
+        coe=get_rms(eeg)/(get_rms(noise1 + noise2)*SNR_train[i])
+        noise = (noise1 + noise2) * coe
+        neeg = noise + eeg
 
         NOISE_train_adjust.append(noise)
         noiseEEG_train.append(neeg)
@@ -119,7 +131,8 @@ def prepare_data(EEG_all, noise_all, combin_num, train_per, noise_type):
     SNR_val = 10 ** (0.05 * (SNR_val_dB))
 
     eeg_val = np.array(validation_eeg)
-    noise_val = np.array(validation_noise)
+    noise1_val = np.array(validation_noise1)
+    noise2_val = np.array(validation_noise2)
     
     # combin eeg and noise for test set
     EEG_val = []
@@ -128,10 +141,11 @@ def prepare_data(EEG_all, noise_all, combin_num, train_per, noise_type):
         noise_eeg_val = []
         for j in range(eeg_val.shape[0]):
             eeg = eeg_val[j]
-            noise = noise_val[j]
+            noise1 = noise1_val[j]
+            noise2 = noise2_val[j]
             
-            coe = get_rms(eeg) / (get_rms(noise) * SNR_val[i])
-            noise = noise * coe
+            coe = get_rms(eeg) / (get_rms(noise1 + noise2) * SNR_val[i])
+            noise = (noise1 + noise2) * coe
             neeg = noise + eeg
             
             noise_eeg_val.append(neeg)
@@ -170,7 +184,8 @@ def prepare_data(EEG_all, noise_all, combin_num, train_per, noise_type):
     SNR_test = 10 ** (0.05 * (SNR_test_dB))
 
     eeg_test = np.array(test_eeg)
-    noise_test = np.array(test_noise)
+    noise1_test = np.array(test_noise1)
+    noise2_test = np.array(test_noise2)
     
     # combin eeg and noise for test set 
     EEG_test = []
@@ -179,10 +194,11 @@ def prepare_data(EEG_all, noise_all, combin_num, train_per, noise_type):
         noise_eeg_test = []
         for j in range(eeg_test.shape[0]):
             eeg = eeg_test[j]
-            noise = noise_test[j]
+            noise1 = noise1_test[j]
+            noise2 = noise2_test[j]
             
-            coe = get_rms(eeg) / (get_rms(noise) * SNR_test[i])
-            noise = noise * coe
+            coe = get_rms(eeg) / (get_rms(noise1 + noise2) * SNR_test[i])
+            noise = (noise1 + noise2) * coe
             neeg = noise + eeg
             
             noise_eeg_test.append(neeg)
