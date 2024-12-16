@@ -13,13 +13,13 @@ from EEGIFNet import MA_INet, MA_MNet
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 def data_prep(batch_size):
-    path = 'EEGIFNet/dataset/'
-    train_input = np.load(path + 'EMG_train_input.npy')
-    train_output = np.load(path + 'EMG_train_output.npy')
-    val_input = np.load(path + 'EMG_val_input.npy')
-    val_output = np.load(path + 'EMG_val_output.npy')
-    test_input = np.load(path + 'EMG_test_input.npy')
-    test_output = np.load(path + 'EMG_test_output.npy')
+    path = 'prepared_data/'
+    train_input = np.load(path + 'train_input.npy')
+    train_output = np.load(path + 'train_output.npy')
+    val_input = np.load(path + 'val_input.npy')
+    val_output = np.load(path + 'val_output.npy')
+    test_input = np.load(path + 'test_input.npy')
+    test_output = np.load(path + 'test_output.npy')
     # train_input = np.load(path + 'EMG_train_input_512hz.npy')
     # train_output = np.load(path + 'EMG_train_output_512hz.npy')
     # val_input = np.load(path + 'EMG_val_input_512hz.npy')
@@ -177,8 +177,8 @@ def train(I, M, device, train_dataloader, val_dataloader, epochs, learning_rate,
 
             if average_val_loss_per_epoch < best_val_loss:
                 print('save model')
-                torch.save(I.state_dict(), 'EEGIFNet/checkpoint/EMG_INet2.pkl')
-                torch.save(M.state_dict(), 'EEGIFNet/checkpoint/EMG_MNet2.pkl')
+                torch.save(I.state_dict(), 'approaches/IFN/model/EMG_INet2.pkl')
+                torch.save(M.state_dict(), 'approaches/IFN/model/EMG_MNet2.pkl')
                 best_val_loss = average_val_loss_per_epoch
 
 
@@ -291,30 +291,30 @@ if __name__ == '__main__':
     batch_size = 256
     epochs = 80
     learning_rate = 5e-5
-    # train_dataloader, val_dataloader, test_dataloader = data_prep(batch_size)
+    train_dataloader, val_dataloader, test_dataloader = data_prep(batch_size)
 
 
 
-    # I = MA_INet().apply(weights_init).to(device)
-    # M = MA_MNet().apply(weights_init).to(device)
+    I = MA_INet().apply(weights_init).to(device)
+    M = MA_MNet().apply(weights_init).to(device)
     
     # 训练
-    # slim_penalty = lambda var: torch.abs(var).sum()
+    slim_penalty = lambda var: torch.abs(var).sum()
     
-    # slim_params, bn_params = [], []
-    # for name, param in I.named_parameters():
-    #     if param.requires_grad and name.endswith('weight') and 'batnorm' in name:
-    #         bn_params.append(param[len(param) // 2:])
-    #         # if len(slim_params) % 2 == 0:
-    #         #     slim_params.append(param[:len(param) // 2])
-    #         # else:
-    #         #     slim_params.append(param[len(param) // 2:])
+    slim_params, bn_params = [], []
+    for name, param in I.named_parameters():
+        if param.requires_grad and name.endswith('weight') and 'batnorm' in name:
+            bn_params.append(param[len(param) // 2:])
+            # if len(slim_params) % 2 == 0:
+            #     slim_params.append(param[:len(param) // 2])
+            # else:
+            #     slim_params.append(param[len(param) // 2:])
     
-    # train(I, M, device, train_dataloader, val_dataloader, epochs, learning_rate, bn_params)
+    train(I, M, device, train_dataloader, val_dataloader, epochs, learning_rate, bn_params)
     
-    # print('----------------------------------------')
-    # del I
-    # del M
+    print('----------------------------------------')
+    del I
+    del M
 
     I = MA_INet().to(device)
     I.load_state_dict(torch.load('approaches/IFN/model/EMG_INet2.pkl'))
