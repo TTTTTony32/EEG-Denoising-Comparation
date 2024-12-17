@@ -1,1 +1,1 @@
-
+data_transposed = data.reshape(1, -1)

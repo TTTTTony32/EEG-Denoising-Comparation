@@ -295,26 +295,26 @@ if __name__ == '__main__':
 
 
 
-    I = MA_INet().apply(weights_init).to(device)
-    M = MA_MNet().apply(weights_init).to(device)
+    # I = MA_INet().apply(weights_init).to(device)
+    # M = MA_MNet().apply(weights_init).to(device)
     
     # 训练
-    slim_penalty = lambda var: torch.abs(var).sum()
+    # slim_penalty = lambda var: torch.abs(var).sum()
     
-    slim_params, bn_params = [], []
-    for name, param in I.named_parameters():
-        if param.requires_grad and name.endswith('weight') and 'batnorm' in name:
-            bn_params.append(param[len(param) // 2:])
-            # if len(slim_params) % 2 == 0:
-            #     slim_params.append(param[:len(param) // 2])
-            # else:
-            #     slim_params.append(param[len(param) // 2:])
+    # slim_params, bn_params = [], []
+    # for name, param in I.named_parameters():
+    #     if param.requires_grad and name.endswith('weight') and 'batnorm' in name:
+    #         bn_params.append(param[len(param) // 2:])
+    #         # if len(slim_params) % 2 == 0:
+    #         #     slim_params.append(param[:len(param) // 2])
+    #         # else:
+    #         #     slim_params.append(param[len(param) // 2:])
     
-    train(I, M, device, train_dataloader, val_dataloader, epochs, learning_rate, bn_params)
+    # train(I, M, device, train_dataloader, val_dataloader, epochs, learning_rate, bn_params)
     
-    print('----------------------------------------')
-    del I
-    del M
+    # print('----------------------------------------')
+    # del I
+    # del M
 
     I = MA_INet().to(device)
     I.load_state_dict(torch.load('approaches/IFN/model/EMG_INet2.pkl'))
@@ -355,8 +355,8 @@ if __name__ == '__main__':
     with torch.no_grad():
         predict_EEG, predict_A = I(test_input_tensor)
         outputs = M(test_input_tensor, predict_EEG, predict_A)
-    predict_EEG = predict_EEG.cpu()
-    np.save('approaches/IFN/denoised_eeg_IFN.npy',predict_EEG)
+    outputs = outputs.cpu()
+    np.save('approaches/IFN/denoised_eeg_IFN.npy',outputs)
 
     # Select a single sample for visualization
     # sample_input = torch.tensor(test_input[index:index+1]).float().to(device)
