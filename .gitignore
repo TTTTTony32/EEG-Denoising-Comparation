@@ -1,0 +1,9 @@
+prepared_data/*
+results/*
+approaches/IFN/result/*
+approaches/IFN/model/*
+approaches/GAN/test_input.npy
+approaches/GAN/test_output.npy
+approaches/GAN/train_input.npy
+approaches/GAN/train_output.npy
+fake.py
