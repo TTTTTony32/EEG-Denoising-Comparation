@@ -2,11 +2,12 @@ import numpy as np
 from scipy.fft import fft, fftfreq
 import matplotlib.pyplot as plt
 
-approach = 'ICA'
+approach = 'CNN'
+approach1 = 'simplecnn'
 
 # 加载信号
 clean_signal = np.load('prepared_data/test_output.npy')
-denoised_signal = np.load('approaches/' + approach + '/denoised_eeg_' + approach + '.npy')
+denoised_signal = np.load('approaches/' + approach + '/denoised_eeg_' + approach1 + '.npy')
 noisy_signal = np.load('prepared_data/test_input.npy')
 
 # 读取信号个数
