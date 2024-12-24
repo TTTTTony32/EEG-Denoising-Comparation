@@ -2,5 +2,5 @@ prepared_data/*
 results/*
 approaches/IFN/result/*
 approaches/IFN/model/*
-approaches/CNN/result/*
+approaches/CNN/Results/*
 fake.py
