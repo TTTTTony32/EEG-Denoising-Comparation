@@ -3,12 +3,16 @@ from scipy.fft import fft, fftfreq
 import matplotlib.pyplot as plt
 
 approach = 'CNN'
-approach1 = 'simplecnn'
+approach1 = 'fcnn'
 
 # 加载信号
+# clean_signal = np.load('prepared_data/test_output.npy')
+# denoised_signal = np.load('approaches/' + approach + '/denoised_eeg_' + approach1 + '.npy')
+# noisy_signal = np.load('prepared_data/test_input.npy')
+
 clean_signal = np.load('prepared_data/test_output.npy')
 denoised_signal = np.load('approaches/' + approach + '/denoised_eeg_' + approach1 + '.npy')
-noisy_signal = np.load('prepared_data/test_input.npy')
+noisy_signal = np.load('approaches/CNN/Result/EMG_RNN_last_fCNN/test_output/noiseinput_test.npy')
 
 # 读取信号个数
 num_signals = clean_signal.shape[0]
