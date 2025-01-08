@@ -54,33 +54,36 @@ random_index = 178
 sample1 = clean_signal[random_index]
 sample3 = noisy_signal[random_index]
 time = np.linspace(0, len(sample1) / 256, len(sample1))
-plt.figure(figsize=(10, 5))
 
-# 绘制所有信号在一个框里
-plt.plot(time, sample3, label='Noised', color=(255/255, 140/255, 0/255))
-plt.plot(time, sample1, label='Clean', color=(0/255, 205/255, 80/255))
-colors = [(0/255, 191/255, 255/255), (0/255, 0/255, 255/255), (255/255, 0/255, 255/255), (214/255, 39/255, 40/255), (174/255, 199/255, 232/255)]
+# 创建子图
+fig, axs = plt.subplots(3, 2, figsize=(15, 8))
+
+# 绘制Noised和Clean信号
+axs[0, 0].plot(time, sample3, label='Noised', color=(174/255, 199/255, 232/255))
+axs[0, 0].plot(time, sample1, label='Clean', color=(44/255, 160/255, 44/255))
+axs[0, 0].set_title(f'Noised and Clean')
+axs[0, 0].set_xlabel('Time (s)')
+axs[0, 0].set_ylabel('Amplitude')
+axs[0, 0].legend()
+axs[0, 0].grid(True, which='both', linestyle='--', color=(187/255, 187/255, 187/255))
+
+# 绘制所有Denoised信号
 for idx, (key, denoised_signal) in enumerate(denoised_signals.items()):
+    row = (idx + 1) // 2
+    col = (idx + 1) % 2
     sample2 = denoised_signal[random_index]
-    plt.plot(time, sample2, label=f'{key}', color=colors[idx])
-
-plt.title('All methods comparison')
-plt.xlabel('Time (s)')
-plt.ylabel('Amplitude')
-plt.legend()
-plt.grid(True, which='both', linestyle='--', color=(187/255, 187/255, 187/255))
+    axs[row, col].plot(time, sample3, label='Noised', color=(174/255, 199/255, 232/255))
+    axs[row, col].plot(time, sample1, label='Clean', color=(44/255, 160/255, 44/255))
+    axs[row, col].plot(time, sample2, label=f'{key}')
+    axs[row, col].set_title(f'{key}')
+    axs[row, col].set_xlabel('Time (s)')
+    axs[row, col].set_ylabel('Amplitude')
+    axs[row, col].legend()
+    axs[row, col].grid(True, which='both', linestyle='--', color=(187/255, 187/255, 187/255))
 
 plt.tight_layout()
-
-# 打印随机样本的RMSE和SNR
-for key in denoised_signals.keys():
-    print(f"{key} RMSE:", rmse_all[key] * 100)
-    print(f"{key} SNR:", snr_all[key] * (10**18))
-
-plt.savefig('results/all_compare_plot.pdf', dpi=300)
+plt.savefig(f'results/compare_plot_{random_index}.pdf', dpi=300)
 plt.show()
-# 保存图片
-
 
 # 绘制频谱图
 # 绘制在一张图上
@@ -92,23 +95,34 @@ def plot_combined_spectrum(clean_signal, denoised_signals, noisy_signal, sample_
     yf_clean = fft(clean_signal)
     yf_noisy = fft(noisy_signal)
     
-    plt.figure(figsize=(10, 5))
-    plt.plot(xf, 2.0/N * np.abs(yf_clean[:N//2]), label='Clean', color=(0/255, 205/255, 80/255))
-    plt.plot(xf, 2.0/N * np.abs(yf_noisy[:N//2]), label='Noised', color=(255/255, 140/255, 0/255))
+    fig, axs = plt.subplots(3, 2, figsize=(15, 8))
     
+    # 绘制Noised和Clean信号的频谱
+    axs[0, 0].plot(xf, 2.0/N * np.abs(yf_noisy[:N//2]), label='Noised', color=(179/255, 179/255, 179/255))
+    axs[0, 0].plot(xf, 2.0/N * np.abs(yf_clean[:N//2]), label='Clean', color=(102/255, 194/255, 165/255))
+    axs[0, 0].set_title('Noised and Clean Spectrum')
+    axs[0, 0].set_xlabel('Frequency (Hz)')
+    axs[0, 0].set_ylabel('Amplitude')
+    axs[0, 0].legend()
+    axs[0, 0].grid(True, which='both', linestyle='--', color=(187/255, 187/255, 187/255))
+    
+    # 绘制所有Denoised信号的频谱
     for idx, (key, denoised_signal) in enumerate(denoised_signals.items()):
+        row = (idx + 1) // 2
+        col = (idx + 1) % 2
         yf_denoised = fft(denoised_signal[random_index])
-        plt.plot(xf, 2.0/N * np.abs(yf_denoised[:N//2]), label=f'{key}', color=colors[idx])
+        axs[row, col].plot(xf, 2.0/N * np.abs(yf_noisy[:N//2]), label='Noised', color=(179/255, 179/255, 179/255))
+        axs[row, col].plot(xf, 2.0/N * np.abs(yf_clean[:N//2]), label='Clean', color=(102/255, 194/255, 165/255))
+        axs[row, col].plot(xf, 2.0/N * np.abs(yf_denoised[:N//2]), label=f'{key}', color=(252/255, 141/255, 98/255))
+        axs[row, col].set_title(f'{key} Spectrum')
+        axs[row, col].set_xlabel('Frequency (Hz)')
+        axs[row, col].set_ylabel('Amplitude')
+        axs[row, col].legend()
+        axs[row, col].grid(True, which='both', linestyle='--', color=(187/255, 187/255, 187/255))
     
-    plt.title('Spectrum of all methods')
-    plt.xlabel('Frequency (Hz)')
-    plt.ylabel('Amplitude')
-    plt.legend()
-    plt.grid(True, which='both', linestyle='--', color=(187/255, 187/255, 187/255))
     plt.tight_layout()
-    plt.savefig('results/all_compare_plot_spect.pdf', dpi=300)
+    plt.savefig(f'results/compare_plot_spect_{random_index}.pdf', dpi=300)
     plt.show()
 
 # 绘制组合频谱图
-
 plot_combined_spectrum(sample1, denoised_signals, sample3, 256)
