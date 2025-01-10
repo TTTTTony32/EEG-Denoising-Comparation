@@ -1,7 +1,7 @@
 from config import *
 from datetime import datetime
 from basenetwork import *
-#from torch.utils.tensorboard import SummaryWriter
+from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data import DataLoader, Dataset
 import numpy as np
 import pandas as pd
@@ -13,7 +13,7 @@ from EEGIFNet import MA_INet, MA_MNet
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 def data_prep(batch_size):
-    path = 'prepared_data/'
+    path = 'data/'
     train_input = np.load(path + 'train_input.npy')
     train_output = np.load(path + 'train_output.npy')
     val_input = np.load(path + 'val_input.npy')
@@ -52,6 +52,8 @@ def train(I, M, device, train_dataloader, val_dataloader, epochs, learning_rate,
     #criterion = nn.SmoothL1Loss()
     best_val_loss = 200.0
 
+    writer = SummaryWriter("./log/"+"{0:%Y-%m-%dT%H-%M-%S/}".format(datetime.now()))
+
     for epoch in range(epochs):
 
         # 训练步骤
@@ -84,13 +86,13 @@ def train(I, M, device, train_dataloader, val_dataloader, epochs, learning_rate,
             #slim_loss = 1e-3 * sum([slim_penalty(m).to(device) for m in bn_params])
 
             loss = loss_e+loss_n+loss_all
-            #loss = (loss_n) * (epoch < 10) + (loss_n + loss_all) * (epoch >= 10)
+            # loss = (loss_n) * (epoch < 10) + (loss_n + loss_all) * (epoch >= 10)
             loss.backward()
             optimizer_I.step()
             optimizer_M.step()
 
 
-            #loss = (loss_e + loss_n)*(epoch < 40) + (0.1*loss_e + 0.1*loss_n +loss_all)*(epoch >= 40)
+            # loss = (loss_e + loss_n)*(epoch < 40) + (0.1*loss_e + 0.1*loss_n +loss_all)*(epoch >= 40)
             # if epoch < 40:
             #     loss = loss_e + loss_n
             #     # loss = loss_n + loss_all
@@ -105,14 +107,15 @@ def train(I, M, device, train_dataloader, val_dataloader, epochs, learning_rate,
             #     loss.backward()
             #     optimizer_I.step()
             #     optimizer_M.step()
+            
             optimizer_I.zero_grad()  # clear up the grads of optimized Variable
             optimizer_M.zero_grad()
         average_train_loss_e_per_epoch = total_train_loss_e_per_epoch / train_step_num
         average_train_loss_n_per_epoch = total_train_loss_n_per_epoch / train_step_num
         average_train_loss_per_epoch = total_train_loss_per_epoch / train_step_num
         print("epoch-{}/{} mse_e: {} mse_n: {} mse_all: {}\n".format(epoch + 1, epochs, average_train_loss_e_per_epoch, average_train_loss_n_per_epoch, average_train_loss_per_epoch))
-        # with SummaryWriter("./log/"+"{0:%Y-%m-%dT%H-%M-%S/}".format(datetime.now())) as writer:
-        #     writer.add_scalar("train_loss", average_train_loss_per_epoch, global_step=epoch)
+        
+        writer.add_scalar("train_loss", average_train_loss_per_epoch, global_step=epoch)
 
 
         # 验证步骤
@@ -171,14 +174,14 @@ def train(I, M, device, train_dataloader, val_dataloader, epochs, learning_rate,
                 epoch + 1, epochs, average_val_loss_per_epoch, acc_e, rrmse_e))
             print("[ACC_n: %f] [RRMSE_n: %f]" % (acc_n, rrmse_n))
             print("[ACC: %f] [RRMSE: %f]" % (acc, rrmse))
-            # with SummaryWriter("./log/"+"{0:%Y-%m-%dT%H-%M-%S/}".format(datetime.now())) as writer:
-            #     writer.add_scalar("val_loss", average_val_loss_per_epoch, global_step=epoch)
-            #     writer.add_scalar("ACC", acc, global_step=epoch)
+            
+            writer.add_scalar("val_loss", average_val_loss_per_epoch, global_step=epoch)
+            writer.add_scalar("ACC", acc, global_step=epoch)
 
             if average_val_loss_per_epoch < best_val_loss:
                 print('save model')
-                torch.save(I.state_dict(), 'approaches/IFN/model/EMG_INet2.pkl')
-                torch.save(M.state_dict(), 'approaches/IFN/model/EMG_MNet2.pkl')
+                torch.save(I.state_dict(), 'model/EMG_INet2.pkl')
+                torch.save(M.state_dict(), 'model/EMG_MNet2.pkl')
                 best_val_loss = average_val_loss_per_epoch
 
 
@@ -237,10 +240,10 @@ def test(I,M, test_dataloader):
 
     val_step_num = 0
     acc_list =[]
-    rrmse_list =[]
+    rmse_list =[]
     snr_list = []
     sum_acc = 0
-    sum_rrmse = 0
+    sum_rmse = 0
     with torch.no_grad():
         for batch_idx, data in enumerate(test_dataloader):
             val_step_num += 1
@@ -260,27 +263,27 @@ def test(I,M, test_dataloader):
             acc = cal_ACC_tensor(outputs.detach(), y.detach()).item()
             acc_list.append(acc)
             #rrmse = cal_RRMSE_tensor(outputs.detach(), x.detach().squeeze() - y.detach()).item()
-            rrmse = cal_RRMSE_tensor(outputs.detach(), y.detach()).item()
-            rrmse_list.append(rrmse)
+            rmse = cal_RMSE_tensor(outputs.detach(), y.detach()).item()
+            rmse_list.append(rmse)
 
             snr = cal_SNR(outputs, y)
             snr_list.append(snr)
 
         acc_all = np.array(acc_list)
-        rrmse_all = np.array(rrmse_list)
+        rmse_all = np.array(rmse_list)
         acc = np.mean(acc_all)
-        rrmse = np.mean(rrmse_all)
+        rmse = np.mean(rmse_all)
         print(acc_all)
         print("acc = " + str(acc))
 
-        print(rrmse_all)
-        print("rrmse = " + str(rrmse))
+        print(rmse_all)
+        print("rmse = " + str(rmse))
         snr_all = np.array(snr_list)
         snr = np.mean(snr_all)
         print(snr_all)
         print("snr = " + str(snr))
 
-        return acc_list, rrmse_list, snr_list
+        return acc_list, rmse_list, snr_list
 
 
 if __name__ == '__main__':
@@ -288,46 +291,46 @@ if __name__ == '__main__':
     torch.manual_seed(1)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
-    batch_size = 256
-    epochs = 80
+    batch_size = 512
+    epochs = 200
     learning_rate = 5e-5
     train_dataloader, val_dataloader, test_dataloader = data_prep(batch_size)
 
 
 
-    # I = MA_INet().apply(weights_init).to(device)
-    # M = MA_MNet().apply(weights_init).to(device)
+    I = MA_INet().apply(weights_init).to(device)
+    M = MA_MNet().apply(weights_init).to(device)
     
     # 训练
-    # slim_penalty = lambda var: torch.abs(var).sum()
+    slim_penalty = lambda var: torch.abs(var).sum()
     
-    # slim_params, bn_params = [], []
-    # for name, param in I.named_parameters():
-    #     if param.requires_grad and name.endswith('weight') and 'batnorm' in name:
-    #         bn_params.append(param[len(param) // 2:])
-    #         # if len(slim_params) % 2 == 0:
-    #         #     slim_params.append(param[:len(param) // 2])
-    #         # else:
-    #         #     slim_params.append(param[len(param) // 2:])
+    slim_params, bn_params = [], []
+    for name, param in I.named_parameters():
+        if param.requires_grad and name.endswith('weight') and 'batnorm' in name:
+            bn_params.append(param[len(param) // 2:])
+            # if len(slim_params) % 2 == 0:
+            #     slim_params.append(param[:len(param) // 2])
+            # else:
+            #     slim_params.append(param[len(param) // 2:])
     
-    # train(I, M, device, train_dataloader, val_dataloader, epochs, learning_rate, bn_params)
+    train(I, M, device, train_dataloader, val_dataloader, epochs, learning_rate, bn_params)
     
     # print('----------------------------------------')
     # del I
     # del M
 
     I = MA_INet().to(device)
-    I.load_state_dict(torch.load('approaches/IFN/model/EMG_INet2.pkl'))
+    I.load_state_dict(torch.load('model/EMG_INet2.pkl'))
     M = MA_MNet().to(device)
-    M.load_state_dict(torch.load('approaches/IFN/model/EMG_MNet2.pkl'))
-    # acc, rrmse, snr = test(I,M, test_dataloader)
+    M.load_state_dict(torch.load('model/EMG_MNet2.pkl'))
+    acc, rmse, snr = test(I,M, test_dataloader)
 
-    # acclist = pd.DataFrame(acc)
-    # acclist.to_csv("EEGIFNet/result/EMG_IMNet2_acc" + ".csv")
-    # rrmselist = pd.DataFrame(rrmse)
-    # rrmselist.to_csv("EEGIFNet/result/EMG_IMNet2_rrmse" + ".csv")
-    # snrlist = pd.DataFrame(snr)
-    # snrlist.to_csv("EEGIFNet/result/EMG_IMNet2_snr" + ".csv")
+    acclist = pd.DataFrame(acc)
+    acclist.to_csv("result/EMG_IMNet2_acc"+str(batch_size)+'_'+str(epochs)+".csv")
+    rmselist = pd.DataFrame(rmse)
+    rmselist.to_csv("result/EMG_IMNet2_rmse"+str(batch_size)+'_'+str(epochs)+".csv")
+    snrlist = pd.DataFrame(snr)
+    snrlist.to_csv("result/EMG_IMNet2_snr"+str(batch_size)+'_'+str(epochs)+".csv")
 
 
     # test_num = test_input.shape[0]//10
@@ -341,8 +344,8 @@ if __name__ == '__main__':
 
     # choose one sample for visualization
     index = 360*0+0
-    test_input = np.load('prepared_data/test_input.npy')
-    test_output = np.load('prepared_data/test_output.npy')
+    test_input = np.load('data/test_input.npy')
+    test_output = np.load('data/test_output.npy')
     test_input = test_input.reshape(-1,1,test_input.shape[-1])
     # pplot(I,M, test_input[index:index+250], test_output[index:index+250])
 
@@ -356,7 +359,7 @@ if __name__ == '__main__':
         predict_EEG, predict_A = I(test_input_tensor)
         outputs = M(test_input_tensor, predict_EEG, predict_A)
     outputs = outputs.cpu()
-    np.save('approaches/IFN/denoised_eeg_IFN.npy',outputs)
+    np.save('denoised_eeg_IFN_'+str(batch_size)+'_'+str(epochs)+'.npy', outputs)
 
     # Select a single sample for visualization
     # sample_input = torch.tensor(test_input[index:index+1]).float().to(device)

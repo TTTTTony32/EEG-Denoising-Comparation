@@ -3,8 +3,8 @@ from scipy.fft import fft, fftfreq
 import matplotlib.pyplot as plt
 plt.rcParams["font.family"] = "Times New Roman"
 
-approach = 'EEGDnet'
-approach1 = 'EEGDnet'
+approach = 'Transfomer'
+approach1 = 'Transfomer'
 
 clean_signal = np.load('prepared_data/test_output.npy')
 denoised_signal = np.load('approaches/' + approach + '/denoised_eeg_' + approach1 + '.npy')
