@@ -4,3 +4,4 @@ approaches/IFN/result/*
 approaches/IFN/model/*
 approaches/CNN/Results/*
 fake.py
+approaches/info.md

@@ -7,10 +7,10 @@ plt.rcParams["font.family"] = "Times New Roman"
 clean_signal = np.load('prepared_data/test_output.npy')
 noisy_signal = np.load('prepared_data/test_input.npy')
 denoised_ifn = np.load('approaches/IFN/denoised_eeg_IFN.npy')
-denoised_mwf = np.load('approaches/MWF/denoised_eeg_MWF.npy')
-denoised_ica = np.load('approaches/ICA/denoised_eeg_ICA.npy')
-denoised_fcnn = np.load('approaches/CNN/denoised_eeg_fcnn.npy')
+denoised_23cnn = np.load('approaches/CNN/denoised_eeg_23cnn.npy')
 denoised_scnn = np.load('approaches/CNN/denoised_eeg_simplecnn.npy')
+denoised_rnn = np.load('approaches/CNN/denoised_eeg_rnn.npy')
+denoised_trs = np.load('approaches/Transfomer/denoised_eeg_Transfomer.npy')
 
 # 读取信号个数
 num_signals = clean_signal.shape[0]
@@ -25,11 +25,11 @@ def compute_snr(clean_signal, noise_signal):
     return 10 * np.log10(signal_power / noise_power)
 
 denoised_signals = {
-    'Transfomer': denoised_ifn,
-    'DT-SFDF': denoised_mwf,
-    'GWO': denoised_ica,
-    'FCNN': denoised_fcnn,
-    'SimpleCNN': denoised_scnn
+    'IFN': denoised_ifn,
+    '2*3CNN': denoised_23cnn,
+    'SimpleCNN': denoised_scnn,
+    'RNN_lstm': denoised_rnn,
+    'Transfomer': denoised_trs
 }
 
 # 计算总RMSE和SNR
