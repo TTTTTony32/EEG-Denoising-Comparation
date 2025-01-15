@@ -1,3 +1,5 @@
-# DSP 2024 Group 4
-### Simulation of EEG artifact removal
+# EEG-Denoising-Comparation
+
+This is the code of our work in the paper "Simulation and Evaluation of State-of-the-Art EEG Denoising Techniques for Optimal Signal Processing"
+
 Datasets comes from EEGDenoiseNet(https://github.com/ncclabsustech/EEGdenoiseNet)
