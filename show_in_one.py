@@ -2,6 +2,7 @@ import numpy as np
 from scipy.fft import fft, fftfreq
 import matplotlib.pyplot as plt
 plt.rcParams["font.family"] = "Times New Roman"
+plt.rcParams.update({'font.size': 12})
 
 # 加载信号
 clean_signal = np.load('prepared_data/test_output.npy')
@@ -47,7 +48,7 @@ for key, denoised_signal in denoised_signals.items():
     rmse_all[key] = np.mean(rmse)
     snr_all[key] = np.mean(snr)
     print(f"{key} RMSE:", rmse_all[key] * 100)
-    print(f"{key} SNR:", snr_all[key] * 2)
+    print(f"{key} SNR:", snr_all[key])
 
 # 随机选择一个样本显示
 random_index = 178
