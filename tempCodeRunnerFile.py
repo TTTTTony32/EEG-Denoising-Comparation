@@ -1,1 +1,0 @@
-plt.rcParams["font.family"] = "Times New Roman"
