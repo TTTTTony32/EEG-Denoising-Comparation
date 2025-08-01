@@ -7,8 +7,8 @@ approach = 'GCTNet'
 approach1 = 'gct'
 
 clean_signal = np.load('prepared_data/test_output.npy')
-denoised_signal = np.load('approaches/' + approach + '/denoised_eeg_' + approach1 + '.npy')
-# denoised_signal = np.load('approaches/denoised_test_output.npy')
+# denoised_signal = np.load('approaches/' + approach + '/denoised_eeg_' + approach1 + '.npy')
+denoised_signal = np.load('approaches/EEGDfus/denoised_eegdfus_vec.npy')
 noisy_signal = np.load('prepared_data/test_input.npy')
 
 # 读取信号个数

@@ -4,6 +4,9 @@ import matplotlib.pyplot as plt
 plt.rcParams["font.family"] = "Times New Roman"
 plt.rcParams.update({'font.size': 12})
 
+# 统一控制字体大小的变量
+FONT_SIZE = 15
+
 # 加载信号
 clean_signal = np.load('prepared_data/test_output.npy')
 noisy_signal = np.load('prepared_data/test_input.npy')
@@ -11,7 +14,7 @@ denoised_ifn = np.load('approaches/IFN/denoised_eeg_IFN.npy')
 denoised_23cnn = np.load('approaches/CNN/denoised_eeg_23cnn.npy')
 denoised_scnn = np.load('approaches/CNN/denoised_eeg_simplecnn.npy')
 denoised_rnn = np.load('approaches/CNN/denoised_eeg_rnn.npy')
-denoised_trs = np.load('approaches/Transfomer/denoised_eeg_Transfomer.npy')
+denoised_trs = np.load('approaches/EEGDnet/denoised_eeg_Transfomer.npy')
 denoised_gct = np.load('approaches/GCTNet/denoised_eeg_gct.npy')
 denoised_fus = np.load('approaches/EEGDfus/denoised_eegdfus_vec.npy')
 denoised_dir = np.load('approaches/EEGDiR/denoised_test_output.npy')
@@ -29,14 +32,14 @@ def compute_snr(clean_signal, noise_signal):
     return 10 * np.log10(signal_power / noise_power)
 
 denoised_signals = {
-    'IFN': denoised_ifn,
-    '2*3CNN': denoised_23cnn,
+    'EEGIFN': denoised_ifn,
+    '2*3RCNN': denoised_23cnn,
     'SimpleCNN': denoised_scnn,
-    'RNN_lstm': denoised_rnn,
-    'Transfomer': denoised_trs,
+    'RNN-LSTM': denoised_rnn,
+    'EEGDnet': denoised_trs,
     'GCTNet': denoised_gct,
     'EEGDfus': denoised_fus,
-    'DiR': denoised_dir
+    'EEGDiR': denoised_dir
 }
 
 # 计算总RMSE和SNR
@@ -71,7 +74,7 @@ time_end_idx = 128  # 结束采样点索引 (默认显示全部)
 
 # 频域放大参数 (指定显示的频率范围，单位Hz)
 freq_start = 0          # 开始频率
-freq_end = 60          # 结束频率 (默认显示到奈奎斯特频率)
+freq_end = 50          # 结束频率 (默认显示到奈奎斯特频率)
 # 如果要放大显示某个频率段，可以修改上面的参数，例如:
 # freq_start = 1         # 从1Hz开始
 # freq_end = 30          # 到30Hz结束
@@ -87,10 +90,11 @@ sample3_zoom = sample3[time_start_idx:time_end_idx]
 # 绘制Noised和Clean信号
 axs[0, 0].plot(time_zoom, sample3_zoom, label='Noised', color=(174/255, 199/255, 232/255))
 axs[0, 0].plot(time_zoom, sample1_zoom, label='Clean', color=(44/255, 160/255, 44/255))
-axs[0, 0].set_title(f'Noised and Clean')
-axs[0, 0].set_xlabel('Time (s)')
-axs[0, 0].set_ylabel('Amplitude')
-axs[0, 0].legend()
+axs[0, 0].set_title(f'Noised and Clean', fontsize=FONT_SIZE)
+axs[0, 0].set_xlabel('Time (s)', fontsize=FONT_SIZE)
+axs[0, 0].set_ylabel('Amplitude', fontsize=FONT_SIZE)
+axs[0, 0].legend(fontsize=12, loc='lower right')
+axs[0, 0].tick_params(axis='both', which='major', labelsize=FONT_SIZE)
 axs[0, 0].grid(True, which='both', linestyle='--', color=(187/255, 187/255, 187/255))
 
 # 绘制所有Denoised信号
@@ -102,10 +106,11 @@ for idx, (key, denoised_signal) in enumerate(denoised_signals.items()):
     axs[row, col].plot(time_zoom, sample3_zoom, label='Noised', color=(174/255, 199/255, 232/255))
     axs[row, col].plot(time_zoom, sample1_zoom, label='Clean', color=(44/255, 160/255, 44/255))
     axs[row, col].plot(time_zoom, sample2_zoom, label=f'{key}')
-    axs[row, col].set_title(f'{key}')
-    axs[row, col].set_xlabel('Time (s)')
-    axs[row, col].set_ylabel('Amplitude')
-    # axs[row, col].legend()
+    axs[row, col].set_title(f'{key}', fontsize=FONT_SIZE)
+    axs[row, col].set_xlabel('Time (s)', fontsize=FONT_SIZE)
+    axs[row, col].set_ylabel('Amplitude', fontsize=FONT_SIZE)
+    axs[row, col].legend(fontsize=12, loc='lower right')
+    axs[row, col].tick_params(axis='both', which='major', labelsize=FONT_SIZE)
     axs[row, col].grid(True, which='both', linestyle='--', color=(187/255, 187/255, 187/255))
 
 plt.tight_layout()
@@ -133,10 +138,11 @@ def plot_combined_spectrum(clean_signal, denoised_signals, noisy_signal, sample_
     yf_noisy_zoom = 2.0/N * np.abs(yf_noisy[:N//2])[freq_mask]
     axs[0, 0].plot(xf_zoom, yf_noisy_zoom, label='Noised', color=(179/255, 179/255, 179/255))
     axs[0, 0].plot(xf_zoom, yf_clean_zoom, label='Clean', color=(102/255, 194/255, 165/255))
-    axs[0, 0].set_title('Noised and Clean Spectrum')
-    axs[0, 0].set_xlabel('Frequency (Hz)')
-    axs[0, 0].set_ylabel('Amplitude')
-    axs[0, 0].legend()
+    axs[0, 0].set_title('Noised and Clean Spectrum', fontsize=FONT_SIZE)
+    axs[0, 0].set_xlabel('Frequency (Hz)', fontsize=FONT_SIZE)
+    axs[0, 0].set_ylabel('Amplitude', fontsize=FONT_SIZE)
+    axs[0, 0].legend(fontsize=12, loc='lower right')
+    axs[0, 0].tick_params(axis='both', which='major', labelsize=FONT_SIZE)
     axs[0, 0].grid(True, which='both', linestyle='--', color=(187/255, 187/255, 187/255))
     
     # 绘制所有Denoised信号的频谱
@@ -148,10 +154,11 @@ def plot_combined_spectrum(clean_signal, denoised_signals, noisy_signal, sample_
         axs[row, col].plot(xf_zoom, yf_noisy_zoom, label='Noised', color=(179/255, 179/255, 179/255))
         axs[row, col].plot(xf_zoom, yf_clean_zoom, label='Clean', color=(102/255, 194/255, 165/255))
         axs[row, col].plot(xf_zoom, yf_denoised_zoom, label=f'{key}', color=(252/255, 141/255, 98/255))
-        axs[row, col].set_title(f'{key} Spectrum')
-        axs[row, col].set_xlabel('Frequency (Hz)')
-        axs[row, col].set_ylabel('Amplitude')
-        # axs[row, col].legend()
+        axs[row, col].set_title(f'{key} Spectrum', fontsize=FONT_SIZE)
+        axs[row, col].set_xlabel('Frequency (Hz)', fontsize=FONT_SIZE)
+        axs[row, col].set_ylabel('Amplitude', fontsize=FONT_SIZE)
+        axs[row, col].legend(fontsize=12, loc='lower right')
+        axs[row, col].tick_params(axis='both', which='major', labelsize=FONT_SIZE)
         axs[row, col].grid(True, which='both', linestyle='--', color=(187/255, 187/255, 187/255))
     
     plt.tight_layout()
